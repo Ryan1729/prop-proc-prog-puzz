@@ -5,6 +5,10 @@ use rand::{Rng, SeedableRng, StdRng};
 static mut RNG: Option<StdRng> = None;
 
 use std::process::Command;
+use std::fs::File;
+use std::env;
+use std::path::Path;
+use std::io::Write;
 
 fn main() {
     let seed: usize = 42;
@@ -30,14 +34,82 @@ fn main() {
 
     println!("{}", func_str);
 
-    let output = Command::new("cargo")
-        .arg("test")
-        .output()
-        .expect("ls command failed to start");
+    let puzzle_name: String = "puzzle_".to_string() + seed.to_string().as_ref();
 
-    println!("status: {}", output.status);
-    println!("stdout: {}", String::from_utf8_lossy(&output.stdout));
-    println!("stderr: {}", String::from_utf8_lossy(&output.stderr));
+    {
+        let output = Command::new("cargo")
+            .arg("new")
+            .arg(&puzzle_name)
+            .output()
+            .expect("cargo does not seem to be installed and on the PATH");
+
+        println!("stderr: {}", String::from_utf8_lossy(&output.stderr));
+    }
+
+    {
+        let output = Command::new("ls")
+            .output()
+            .expect("ls does not seem to be installed and on the PATH");
+
+        println!("status: {}", output.status);
+        println!("stdout: {}", String::from_utf8_lossy(&output.stdout));
+        println!("stderr: {}", String::from_utf8_lossy(&output.stderr));
+    }
+
+    env::set_current_dir(Path::new(&puzzle_name)).unwrap();
+
+
+
+    {
+        let output = Command::new("mkdir")
+            .arg("-p")
+            .arg("tests")
+            .output()
+            .expect("mkdir does not seem to be installed and on the PATH");
+
+        println!("status: {}", output.status);
+        println!("stdout: {}", String::from_utf8_lossy(&output.stdout));
+        println!("stderr: {}", String::from_utf8_lossy(&output.stderr));
+    }
+
+    env::set_current_dir(Path::new("tests")).unwrap();
+
+    let test_filename = puzzle_name.to_string() + ".rs";
+
+    let mut test_file = File::create(&test_filename).unwrap();
+
+    write!(test_file,
+           r"
+    extern crate {puzzle_name};
+
+    {func_str}
+
+    #[test]
+    fn test_true() {{
+        assert_eq!(fill_me_in(true), {puzzle_name}::fill_me_in(true));
+    }}
+    #[test]
+    fn test_false() {{
+        assert_eq!(fill_me_in(false), {puzzle_name}::fill_me_in(false));
+    }}
+    ",
+           puzzle_name = puzzle_name,
+           func_str = func_str)
+        .unwrap();
+
+
+    {
+        let output = Command::new("cat")
+            .arg(&test_filename)
+            .output()
+            .expect("cat does not seem to be installed and on the PATH");
+
+        println!("status: {}", output.status);
+        println!("stdout: {}", String::from_utf8_lossy(&output.stdout));
+        println!("stderr: {}", String::from_utf8_lossy(&output.stderr));
+    }
+
+    env::set_current_dir(Path::new("tests")).unwrap();
 }
 
 fn template(code: &str) -> String {
@@ -47,4 +119,14 @@ fn template(code: &str) -> String {
     }}
     ",
             code)
+}
+
+fn ls() {
+    let output = Command::new("ls")
+        .output()
+        .expect("ls does not seem to be installed and on the PATH");
+
+    println!("status: {}", output.status);
+    println!("stdout: {}", String::from_utf8_lossy(&output.stdout));
+    println!("stderr: {}", String::from_utf8_lossy(&output.stderr));
 }
