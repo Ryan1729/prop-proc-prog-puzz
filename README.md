@@ -10,8 +10,6 @@ Then the challenge is to fill in the function template such that it passes the t
 
 # TODO list
 
-quick-check
-
 bool to u8
 
 make switching the types easy
