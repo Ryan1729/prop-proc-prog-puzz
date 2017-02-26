@@ -7,10 +7,14 @@ static mut RNG: Option<StdRng> = None;
 use std::process::Command;
 
 fn main() {
+    let seed: usize = 42;
+
+    println!("seed: {}", seed);
+
     let mut rng;
     unsafe {
         if RNG.is_none() {
-            let seed: &[_] = &[42];
+            let seed: &[_] = &[seed];
             RNG = Some(SeedableRng::from_seed(seed));
         }
 
