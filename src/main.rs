@@ -32,8 +32,6 @@ fn main() {
         _ => template("true"),
     };
 
-    println!("{}", func_str);
-
     let puzzle_name: String = "puzzle_".to_string() + seed.to_string().as_ref();
 
     {
@@ -46,23 +44,13 @@ fn main() {
         println!("stderr: {}", String::from_utf8_lossy(&output.stderr));
     }
 
-    ls();
-
     cd(&puzzle_name);
 
-    ls();
-
-    {
-        let output = Command::new("mkdir")
-            .arg("-p")
-            .arg("tests")
-            .output()
-            .expect("mkdir does not seem to be installed and on the PATH");
-
-        println!("status: {}", output.status);
-        println!("stdout: {}", String::from_utf8_lossy(&output.stdout));
-        println!("stderr: {}", String::from_utf8_lossy(&output.stderr));
-    }
+    Command::new("mkdir")
+        .arg("-p")
+        .arg("tests")
+        .output()
+        .expect("mkdir does not seem to be installed and on the PATH");
 
     cd("tests");
 
@@ -89,23 +77,7 @@ fn main() {
            func_str = func_str)
         .unwrap();
 
-
-    {
-        let output = Command::new("cat")
-            .arg(&test_filename)
-            .output()
-            .expect("cat does not seem to be installed and on the PATH");
-
-        println!("status: {}", output.status);
-        println!("stdout: {}", String::from_utf8_lossy(&output.stdout));
-        println!("stderr: {}", String::from_utf8_lossy(&output.stderr));
-    }
-
-    cd("..");
-
-    ls();
-
-    cd("src");
+    cd("../src");
 
     let mut template_file = File::create("lib.rs").unwrap();
 
@@ -125,7 +97,7 @@ fn cd(path: &str) {
     env::set_current_dir(Path::new(path)).unwrap();
 }
 
-fn ls() {
+fn _ls() {
     let output = Command::new("ls")
         .output()
         .expect("ls does not seem to be installed and on the PATH");
