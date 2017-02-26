@@ -9,6 +9,7 @@ use std::fs::File;
 use std::env;
 use std::path::Path;
 use std::io::Write;
+use std::fs::OpenOptions;
 
 fn main() {
     let seed: usize = 42;
@@ -59,20 +60,30 @@ fn main() {
     let mut test_file = File::create(&test_filename).unwrap();
 
     write!(test_file,
-           r"
+           r##"
+    #[cfg(test)]
+    #[macro_use]
+    extern crate quickcheck;
     extern crate {puzzle_name};
 
     {func_str}
 
-    #[test]
-    fn test_true() {{
-        assert_eq!(fill_me_in(true), {puzzle_name}::fill_me_in(true));
-    }}
-    #[test]
-    fn test_false() {{
-        assert_eq!(fill_me_in(false), {puzzle_name}::fill_me_in(false));
-    }}
-    ",
+    #[cfg(test)]
+    quickcheck! {{
+        fn prop(input: bool) -> () {{
+            let expected = fill_me_in(input);
+            let recieved = {puzzle_name}::fill_me_in(input);
+
+            if expected != recieved {{
+              panic!("given an input of ({{input}}) \
+              we expeceted a result of ({{expected}}) \
+              but we recieved ({{recieved}}) instead!",
+               input=input, expected=expected, recieved=recieved)
+           }}
+
+       }}
+   }}
+    "##,
            puzzle_name = puzzle_name,
            func_str = func_str)
         .unwrap();
@@ -82,6 +93,21 @@ fn main() {
     let mut template_file = File::create("lib.rs").unwrap();
 
     write!(template_file, "{}", template("unimplemented!();")).unwrap();
+
+    cd("..");
+
+    let mut toml = OpenOptions::new().append(true).open("Cargo.toml").unwrap();
+
+    write!(toml,
+           "{}",
+           r#"
+
+    [dev-dependencies]
+    quickcheck = "0.3"
+    "#)
+        .unwrap();
+
+    println!("wrote {}", &puzzle_name);
 }
 
 fn template(code: &str) -> String {
