@@ -1,0 +1,6 @@
+[package]
+name = "prop_proc_prog_puzz"
+version = "0.1.0"
+authors = ["Ryan1729 <Ryan1729@gmail.com>"]
+
+[dependencies]
