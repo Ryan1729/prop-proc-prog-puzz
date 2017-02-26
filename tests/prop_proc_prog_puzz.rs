@@ -1,10 +1,24 @@
+#[cfg(test)]
+#[macro_use]
+extern crate quickcheck;
 extern crate prop_proc_prog_puzz;
 
-#[test]
-fn test_true() {
-    assert_eq!(false, prop_proc_prog_puzz::fill_me_in(true));
+fn fill_me_in(b: bool) -> bool {
+    b
 }
-#[test]
-fn test_false() {
-    assert_eq!(true, prop_proc_prog_puzz::fill_me_in(false));
+
+#[cfg(test)]
+quickcheck! {
+    fn prop(input: bool) -> () {
+        let expected = fill_me_in(input);
+        let recieved = prop_proc_prog_puzz::fill_me_in(input);
+
+        if expected != recieved {
+          panic!("given an input of ({input}) \
+          we expeceted a result of ({expected}) \
+          but we recieved ({recieved}) instead!",
+           input=input, expected=expected, recieved=recieved)
+        }
+
+    }
 }
