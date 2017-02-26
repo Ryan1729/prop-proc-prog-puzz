@@ -10,9 +10,10 @@ Then the challenge is to fill in the function template such that it passes the t
 
 # TODO list
 
-bool to u8
+three valued enum to three valued enum
 
-make switching the types easy
+actual geneeration rather than string literals
+  -> generate using a context-free grammar
 
 bool to 3 value enum
   -> make sure all 9 funtions are generated
