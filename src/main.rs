@@ -4,6 +4,8 @@ use rand::{Rng, SeedableRng, StdRng};
 
 static mut RNG: Option<StdRng> = None;
 
+use std::process::Command;
+
 fn main() {
     let mut rng;
     unsafe {
@@ -23,6 +25,14 @@ fn main() {
     };
 
     println!("{}", func_str);
+
+    let output = Command::new("ls")
+        .output()
+        .expect("ls command failed to start");
+
+    println!("status: {}", output.status);
+    println!("stdout: {}", String::from_utf8_lossy(&output.stdout));
+    println!("stderr: {}", String::from_utf8_lossy(&output.stderr));
 }
 
 fn template(code: &str) -> String {
