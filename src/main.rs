@@ -12,8 +12,10 @@ use std::io::Write;
 use std::fs::OpenOptions;
 
 fn main() {
-    let seed: usize = 42;
+    let input_type = "bool";
+    let output_type = "u8";
 
+    let seed: usize = 42;
     println!("seed: {}", seed);
 
     let mut rng;
@@ -27,10 +29,10 @@ fn main() {
     }
 
     let func_str = match rng.gen::<u8>() % 4 {
-        0 => template("false"),
-        1 => template("!b"),
-        2 => template("b"),
-        _ => template("true"),
+        0 => template(input_type, output_type, "b'f'"),
+        1 => template(input_type, output_type, "if input {b'f'} else {b't'}"),
+        2 => template(input_type, output_type, "if input {b't'} else {b'f'}"),
+        _ => template(input_type, output_type, "b't'"),
     };
 
     let puzzle_name: String = "puzzle_".to_string() + seed.to_string().as_ref();
@@ -70,7 +72,7 @@ fn main() {
 
     #[cfg(test)]
     quickcheck! {{
-        fn prop(input: bool) -> () {{
+        fn prop(input: {input_type}) -> () {{
             let expected = fill_me_in(input);
             let recieved = {puzzle_name}::fill_me_in(input);
 
@@ -85,6 +87,7 @@ fn main() {
    }}
     "##,
            puzzle_name = puzzle_name,
+           input_type = input_type,
            func_str = func_str)
         .unwrap();
 
@@ -92,7 +95,10 @@ fn main() {
 
     let mut template_file = File::create("lib.rs").unwrap();
 
-    write!(template_file, "{}", template("unimplemented!();")).unwrap();
+    write!(template_file,
+           "{}",
+           template(input_type, output_type, "unimplemented!();"))
+        .unwrap();
 
     cd("..");
 
@@ -110,13 +116,15 @@ fn main() {
     println!("wrote {}", &puzzle_name);
 }
 
-fn template(code: &str) -> String {
+fn template(input_type: &str, output_type: &str, code: &str) -> String {
     format!(r"
-    pub fn fill_me_in (b : bool) -> bool {{
+    pub fn fill_me_in (input : {input_type}) -> {output_type} {{
         {}
     }}
     ",
-            code)
+            code,
+            input_type = input_type,
+            output_type = output_type)
 }
 
 fn cd(path: &str) {
