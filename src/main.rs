@@ -46,19 +46,11 @@ fn main() {
         println!("stderr: {}", String::from_utf8_lossy(&output.stderr));
     }
 
-    {
-        let output = Command::new("ls")
-            .output()
-            .expect("ls does not seem to be installed and on the PATH");
+    ls();
 
-        println!("status: {}", output.status);
-        println!("stdout: {}", String::from_utf8_lossy(&output.stdout));
-        println!("stderr: {}", String::from_utf8_lossy(&output.stderr));
-    }
+    cd(&puzzle_name);
 
-    env::set_current_dir(Path::new(&puzzle_name)).unwrap();
-
-
+    ls();
 
     {
         let output = Command::new("mkdir")
@@ -72,7 +64,7 @@ fn main() {
         println!("stderr: {}", String::from_utf8_lossy(&output.stderr));
     }
 
-    env::set_current_dir(Path::new("tests")).unwrap();
+    cd("tests");
 
     let test_filename = puzzle_name.to_string() + ".rs";
 
@@ -109,7 +101,15 @@ fn main() {
         println!("stderr: {}", String::from_utf8_lossy(&output.stderr));
     }
 
-    env::set_current_dir(Path::new("tests")).unwrap();
+    cd("..");
+
+    ls();
+
+    cd("src");
+
+    let mut template_file = File::create("lib.rs").unwrap();
+
+    write!(template_file, "{}", template("unimplemented!();")).unwrap();
 }
 
 fn template(code: &str) -> String {
@@ -119,6 +119,10 @@ fn template(code: &str) -> String {
     }}
     ",
             code)
+}
+
+fn cd(path: &str) {
+    env::set_current_dir(Path::new(path)).unwrap();
 }
 
 fn ls() {
