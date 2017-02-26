@@ -26,9 +26,8 @@ fn main() {
 
     println!("{}", func_str);
 
-    let output = Command::new("ls")
-        .arg("-l")
-        .arg("-h")
+    let output = Command::new("cargo")
+        .arg("test")
         .output()
         .expect("ls command failed to start");
 
