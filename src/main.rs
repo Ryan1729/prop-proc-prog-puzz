@@ -18,6 +18,7 @@ pub struct PuzzleType {
     name: String,
     arbitrary_impl: String,
     is_enum: bool,
+    built_in: bool,
 }
 
 impl PuzzleType {
@@ -27,6 +28,7 @@ impl PuzzleType {
             name: name.to_string(),
             arbitrary_impl: "".to_string(),
             is_enum: false,
+            built_in: true,
         }
     }
 }
@@ -64,37 +66,13 @@ pub enum Axis {
 "
         .to_string(),
     is_enum: true,
+    built_in: false,
 };
 
 */
 
 fn main() {
-    let input_type = PuzzleType {
-        definition: "#[derive(Debug, PartialEq, Clone, Copy)]
-pub enum Axis {
-    X,
-    Y,
-    Z
-}
-"
-            .to_string(),
-        name: "Axis".to_string(),
-        arbitrary_impl: "impl Arbitrary for Axis {
-    fn arbitrary<G>(g: &mut G) -> Axis
-                         where G: Gen
-    {
-        let r: u8 = g.gen_range(0, 3);
-        match  r {
-            0 => X,
-            1 => Y,
-            _ => Z,
-        }
-    }
-}
-"
-            .to_string(),
-        is_enum: true,
-    };
+    let input_type = PuzzleType::built_in("bool");
 
     let output_type = PuzzleType {
         definition: "#[derive(Debug, PartialEq, Clone, Copy)]
@@ -121,6 +99,7 @@ pub enum Colour {
 "
             .to_string(),
         is_enum: true,
+        built_in: false,
     };
 
     let seed: usize = 42;
@@ -143,93 +122,80 @@ pub enum Colour {
         0 => "Red",
         1 => {
             "match input {
-                 X => Red,
-                 Y => Red,
-                 Z => Green,
+                 true => Red,
+                 false => Green,
              }"
         }
         2 => {
             "match input {
-                 X => Red,
-                 Y => Red,
-                 Z => Green,
+                 true => Red,
+                 false => Green,
              }"
         }
         3 => {
             "match input {
-                 X => Red,
-                 Y => Red,
-                 Z => Blue,
+                 true => Red,
+                 false => Blue,
              }"
         }
         4 => {
             "match input {
-                 X => Red,
-                 Y => Green,
-                 Z => Red,
+                 true => Green,
+                 false => Red,
              }"
         }
         5 => {
             "match input {
-                 X => Red,
-                 Y => Green,
-                 Z => Green,
+                 true => Green,
+                 false => Green,
              }"
         }
         6 => {
             "match input {
-                 X => Red,
-                 Y => Green,
-                 Z => Blue,
+                 true => Green,
+                 false => Blue,
              }"
         }
         7 => {
             "match input {
-                 X => Red,
-                 Y => Blue,
-                 Z => Red,
+                 true => Blue,
+                 false => Red,
              }"
         }
         8 => {
             "match input {
-                 X => Red,
-                 Y => Blue,
-                 Z => Green,
+                 true => Blue,
+                 false => Green,
              }"
         }
         9 => {
             "match input {
-                 X => Red,
-                 Y => Blue,
-                 Z => Blue,
+                 true => Blue,
+                 false => Blue,
              }"
         }
         10 => {
             "match input {
-                 X => Green,
-                 Y => Red,
-                 Z => Red,
+                 true => Red,
+                 false => Red,
              }"
         }
         11 => {
             "match input {
-                 X => Green,
-                 Y => Red,
-                 Z => Green,
+                 true => Red,
+                 false => Green,
              }"
         }
         12 => {
             "match input {
-                 X => Green,
-                 Y => Red,
-                 Z => Blue,
+                 true => Red,
+                 false => Blue,
              }"
         }
         13 => {
             "match input {
-                 X => Green,
-                 Y => Green,
-                 Z => Red,
+                 true => Green,
+                 false => Red,
              }"
         }
         14 => "Green",
@@ -294,8 +260,8 @@ pub enum Colour {
            puzzle_name = puzzle_name,
            input_name = input_type.name,
            func_str = func_str,
-           input_import = import(&puzzle_name, &input_type.name),
-           output_import = import(&puzzle_name, &output_type.name),
+           input_import = import(&puzzle_name, &input_type),
+           output_import = import(&puzzle_name, &output_type),
            enum_star=get_enum_star(&input_type, &output_type),
            )
         .unwrap();
@@ -365,8 +331,12 @@ fn _ls() {
     println!("stderr: {}", String::from_utf8_lossy(&output.stderr));
 }
 
-fn import(module: &str, name: &str) -> String {
-    format!("use {}::{};", module, name)
+fn import(module: &str, t: &PuzzleType) -> String {
+    if t.built_in {
+        "".to_string()
+    } else {
+        format!("use {}::{};", module, t.name)
+    }
 }
 
 fn get_enum_star(t1: &PuzzleType, t2: &PuzzleType) -> String {
