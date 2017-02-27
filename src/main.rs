@@ -16,10 +16,9 @@ mod code_gen;
 use code_gen::PuzzleType;
 
 fn main() {
-    let input_example: &Fn(&mut StdRng) -> String =
-        &|rng: &mut StdRng| rng.gen::<bool>().to_string();
+    let input_example: &Fn(&mut StdRng) -> String = &|rng: &mut StdRng| rng.gen::<u8>().to_string();
 
-    let input_type = &PuzzleType::built_in("bool", input_example);
+    let input_type = &PuzzleType::built_in("u8", input_example);
 
     let output_type = &PuzzleType {
         definition: "#[derive(Debug, PartialEq, Clone, Copy)]
@@ -52,6 +51,7 @@ pub enum Colour {
             1 => "Green".to_string(),
             _ => "Blue".to_string(),
         },
+        is_integer: false,
     };
 
     let seed: usize = 42;
