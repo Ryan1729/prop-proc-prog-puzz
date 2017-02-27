@@ -11,70 +11,17 @@ use std::path::Path;
 use std::io::Write;
 use std::fs::OpenOptions;
 
+mod code_gen;
 
-
-pub struct PuzzleType {
-    definition: String,
-    name: String,
-    arbitrary_impl: String,
-    is_enum: bool,
-    built_in: bool,
-}
-
-impl PuzzleType {
-    pub fn built_in(name: &str) -> Self {
-        PuzzleType {
-            definition: "".to_string(),
-            name: name.to_string(),
-            arbitrary_impl: "".to_string(),
-            is_enum: false,
-            built_in: true,
-        }
-    }
-}
-
-/*
-
-built-in type example:
-
-PuzzleType::built_in("usize")
-
-enum example:
-
-PuzzleType {
-    definition: "#[derive(Debug, PartialEq, Clone, Copy)]
-pub enum Axis {
-    X,
-    Y,
-    Z
-}
-"
-        .to_string(),
-    name: "Axis".to_string(),
-    arbitrary_impl: "impl Arbitrary for Axis {
-    fn arbitrary<G>(g: &mut G) -> Axis
-                     where G: Gen
-    {
-        let r: u8 = g.gen_range(0, 3);
-        match  r {
-            0 => X,
-            1 => Y,
-            _ => Z,
-        }
-    }
-}
-"
-        .to_string(),
-    is_enum: true,
-    built_in: false,
-};
-
-*/
+use code_gen::PuzzleType;
 
 fn main() {
-    let input_type = PuzzleType::built_in("bool");
+    let input_example: &Fn(&mut StdRng) -> String =
+        &|rng: &mut StdRng| rng.gen::<bool>().to_string();
 
-    let output_type = PuzzleType {
+    let input_type = &PuzzleType::built_in("bool", input_example);
+
+    let output_type = &PuzzleType {
         definition: "#[derive(Debug, PartialEq, Clone, Copy)]
 pub enum Colour {
     Red,
@@ -100,12 +47,17 @@ pub enum Colour {
             .to_string(),
         is_enum: true,
         built_in: false,
+        example: &|mut rng| match rng.gen::<u8>() % 3 {
+            0 => "Red".to_string(),
+            1 => "Green".to_string(),
+            _ => "Blue".to_string(),
+        },
     };
 
     let seed: usize = 42;
     println!("seed: {}", seed);
 
-    let mut rng;
+    let rng;
     unsafe {
         if RNG.is_none() {
             let seed: &[_] = &[seed];
@@ -117,92 +69,9 @@ pub enum Colour {
 
     let puzzle_name: String = "puzzle_".to_string() + seed.to_string().as_ref();
 
+    let code = code_gen::gen(rng, input_type, output_type);
 
-    let code = match rng.gen::<u8>() % 4 {
-        0 => "Red",
-        1 => {
-            "match input {
-                 true => Red,
-                 false => Green,
-             }"
-        }
-        2 => {
-            "match input {
-                 true => Red,
-                 false => Green,
-             }"
-        }
-        3 => {
-            "match input {
-                 true => Red,
-                 false => Blue,
-             }"
-        }
-        4 => {
-            "match input {
-                 true => Green,
-                 false => Red,
-             }"
-        }
-        5 => {
-            "match input {
-                 true => Green,
-                 false => Green,
-             }"
-        }
-        6 => {
-            "match input {
-                 true => Green,
-                 false => Blue,
-             }"
-        }
-        7 => {
-            "match input {
-                 true => Blue,
-                 false => Red,
-             }"
-        }
-        8 => {
-            "match input {
-                 true => Blue,
-                 false => Green,
-             }"
-        }
-        9 => {
-            "match input {
-                 true => Blue,
-                 false => Blue,
-             }"
-        }
-        10 => {
-            "match input {
-                 true => Red,
-                 false => Red,
-             }"
-        }
-        11 => {
-            "match input {
-                 true => Red,
-                 false => Green,
-             }"
-        }
-        12 => {
-            "match input {
-                 true => Red,
-                 false => Blue,
-             }"
-        }
-        13 => {
-            "match input {
-                 true => Green,
-                 false => Red,
-             }"
-        }
-        14 => "Green",
-        _ => "Blue",
-    };
-
-    let func_str = template(&input_type.name, &output_type.name, code);
+    let func_str = template(&input_type.name, &output_type.name, &code);
 
     {
         let output = Command::new("cargo")
