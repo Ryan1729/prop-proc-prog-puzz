@@ -10,8 +10,6 @@ Then the challenge is to fill in the function template such that it passes the t
 
 # TODO list
 
-three valued enum to three valued enum
-
 actual geneeration rather than string literals
   -> generate using a context-free grammar
 

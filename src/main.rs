@@ -13,12 +13,60 @@ use std::fs::OpenOptions;
 
 
 
-struct PuzzleType {
+pub struct PuzzleType {
     definition: String,
     name: String,
     arbitrary_impl: String,
     is_enum: bool,
 }
+
+impl PuzzleType {
+    pub fn built_in(name: &str) -> Self {
+        PuzzleType {
+            definition: "".to_string(),
+            name: name.to_string(),
+            arbitrary_impl: "".to_string(),
+            is_enum: false,
+        }
+    }
+}
+
+/*
+
+built-in type example:
+
+PuzzleType::built_in("usize")
+
+enum example:
+
+PuzzleType {
+    definition: "#[derive(Debug, PartialEq, Clone, Copy)]
+pub enum Axis {
+    X,
+    Y,
+    Z
+}
+"
+        .to_string(),
+    name: "Axis".to_string(),
+    arbitrary_impl: "impl Arbitrary for Axis {
+    fn arbitrary<G>(g: &mut G) -> Axis
+                     where G: Gen
+    {
+        let r: u8 = g.gen_range(0, 3);
+        match  r {
+            0 => X,
+            1 => Y,
+            _ => Z,
+        }
+    }
+}
+"
+        .to_string(),
+    is_enum: true,
+};
+
+*/
 
 fn main() {
     let input_type = PuzzleType {
