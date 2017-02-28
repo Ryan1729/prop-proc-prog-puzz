@@ -1,88 +1,153 @@
 use rand::{Rng, StdRng};
 
 pub fn gen(rng: &mut StdRng, input_type: &PuzzleType, output_type: &PuzzleType) -> String {
-    if input_type.is_integer {
-        int_input_gen(rng, input_type, output_type)
-    } else if input_type.is_partial_eq {
-        partial_eq_gen(rng, input_type, output_type)
-    } else {
-        type_expr(rng, output_type)
-    }
+    let mut generator = CodeGenerator {
+        rng: rng,
+        input_type: input_type,
+        output_type: output_type,
+        count: 0,
+        maximum: 8,
+    };
+
+    generator.gen()
 }
 
-fn int_input_gen(rng: &mut StdRng, input_type: &PuzzleType, output_type: &PuzzleType) -> String {
-    //TODO add recursion limit so we canmake interesting results more common
-    // but still have it terminate. It would also allow difficulty scaling.
-    match rng.gen::<u8>() % 14 {
-        0 => type_expr(rng, output_type),
-        1 => {
-            format!("if input == {input_type_expr} {{
-            {expr1}
-        }} else {{
-            {expr2}
-        }}",
-        input_type_expr = type_expr(rng, input_type),
-        expr1 = int_input_gen(rng, input_type, output_type),
-        expr2 = int_input_gen(rng, input_type, output_type),
-    )
+struct CodeGenerator<'a> {
+    rng: &'a mut StdRng,
+    input_type: &'a PuzzleType<'a>,
+    output_type: &'a PuzzleType<'a>,
+    count: u8,
+    maximum: u8,
+}
+
+impl<'a> CodeGenerator<'a> {
+    pub fn gen(&mut self) -> String {
+        if self.input_type.is_integer {
+            self.int_input_gen()
+        } else if self.input_type.is_partial_eq {
+            self.partial_eq_gen()
+        } else {
+            type_expr(self.rng, self.output_type)
         }
-        2 => {
-            format!("if input >= {input_type_expr} {{
-            {expr1}
-        }} else {{
-            {expr2}
-        }}",
-        input_type_expr = type_expr(rng, input_type),
-        expr1 = int_input_gen(rng, input_type, output_type),
-        expr2 = int_input_gen(rng, input_type, output_type),
-    )
+    }
+
+
+    fn int_input_gen(&mut self) -> String {
+        if self.count >= self.maximum {
+            return type_expr(self.rng, self.output_type);
         }
-        3 => {
-            format!("if input > {input_type_expr} {{
-            {expr1}
-        }} else {{
-            {expr2}
-        }}",
-        input_type_expr = type_expr(rng, input_type),
-        expr1 = int_input_gen(rng, input_type, output_type),
-        expr2 = int_input_gen(rng, input_type, output_type),
-    )
+
+        self.count += 1;
+
+        match self.rng.gen::<u8>() % 8 {
+            0 => type_expr(self.rng, self.output_type),
+            1 => {
+                format!("if input == {input_type_expr} {{
+                    {expr1}
+                }} else {{
+                    {expr2}
+                }}",
+                input_type_expr = type_expr(self.rng, self.input_type),
+                expr1 = self.int_input_gen(),
+                expr2 = self.int_input_gen(),
+            )
+            }
+            2 => {
+                format!("if input >= {input_type_expr} {{
+                    {expr1}
+                }} else {{
+                    {expr2}
+                }}",
+                input_type_expr = type_expr(self.rng, self.input_type),
+                expr1 = self.int_input_gen(),
+                expr2 = self.int_input_gen(),
+            )
+            }
+            3 => {
+                format!("if input > {input_type_expr} {{
+                    {expr1}
+                }} else {{
+                    {expr2}
+                }}",
+                input_type_expr = type_expr(self.rng, self.input_type),
+                expr1 = self.int_input_gen(),
+                expr2 = self.int_input_gen(),
+            )
+            }
+            4 => {
+                format!("if input <= {input_type_expr} {{
+                    {expr1}
+                }} else {{
+                    {expr2}
+                }}",
+                input_type_expr = type_expr(self.rng, self.input_type),
+                expr1 = self.int_input_gen(),
+                expr2 = self.int_input_gen(),
+            )
+            }
+            5 => {
+                format!("if input < {input_type_expr} {{
+                    {expr1}
+                }} else {{
+                    {expr2}
+                }}",
+                input_type_expr = type_expr(self.rng, self.input_type),
+                expr1 = self.int_input_gen(),
+                expr2 = self.int_input_gen(),
+            )
+            }
+            6 => {
+                format!("if input != {input_type_expr} {{
+                        {expr1}
+                    }} else {{
+                        {expr2}
+                    }}",
+                    input_type_expr = type_expr(self.rng, self.input_type),
+                    expr1 = self.int_input_gen(),
+                    expr2 = self.int_input_gen(),
+                    )
+            }
+            //TODO expression that involves `input`
+            //TODO boolean expressions
+            _ => type_expr(self.rng, self.output_type),
+
         }
-        4 => {
-            format!("if input <= {input_type_expr} {{
-            {expr1}
-        }} else {{
-            {expr2}
-        }}",
-        input_type_expr = type_expr(rng, input_type),
-        expr1 = int_input_gen(rng, input_type, output_type),
-        expr2 = int_input_gen(rng, input_type, output_type),
-    )
+    }
+
+
+
+    fn partial_eq_gen(&mut self) -> String {
+        if self.count >= self.maximum {
+            return type_expr(self.rng, self.output_type);
         }
-        5 => {
-            format!("if input < {input_type_expr} {{
-            {expr1}
-        }} else {{
-            {expr2}
-        }}",
-        input_type_expr = type_expr(rng, input_type),
-        expr1 = int_input_gen(rng, input_type, output_type),
-        expr2 = int_input_gen(rng, input_type, output_type),
-    )
-        }
-        6 => {
-            format!("if input != {input_type_expr} {{
+
+        self.count += 1;
+
+        match self.rng.gen::<u8>() % 3 {
+            0 => type_expr(self.rng, self.output_type),
+            1 => {
+                format!("if input == {input_example} {{
                 {expr1}
             }} else {{
                 {expr2}
             }}",
-            input_type_expr = type_expr(rng, input_type),
-            expr1 = int_input_gen(rng, input_type, output_type),
-            expr2 = int_input_gen(rng, input_type, output_type),
-            )
+            input_example =  type_expr(self.rng, self.input_type),
+            expr1 = self.partial_eq_gen(),
+            expr2 = self.partial_eq_gen(),
+        )
+            }
+            _ => {
+                format!("if input != {input_example} {{
+                {expr1}
+            }} else {{
+                {expr2}
+            }}",
+            input_example =  type_expr(self.rng, self.input_type),
+            expr1 = self.partial_eq_gen(),
+            expr2 = self.partial_eq_gen(),
+        )
+            }
         }
-        //TODO expression that involves `input`
-        _ => type_expr(rng, output_type),
 
     }
 }
@@ -126,8 +191,8 @@ fn int_expr(rng: &mut StdRng, t: &PuzzleType) -> String {
         }
         //TODO subexpressions
     }
-
 }
+
 
 fn type_expr(rng: &mut StdRng, t: &PuzzleType) -> String {
     if t.is_integer {
@@ -135,35 +200,6 @@ fn type_expr(rng: &mut StdRng, t: &PuzzleType) -> String {
     } else {
         (t.example)(rng)
     }
-}
-
-fn partial_eq_gen(rng: &mut StdRng, input_type: &PuzzleType, output_type: &PuzzleType) -> String {
-    match rng.gen::<u8>() % 3 {
-        0 => (output_type.example)(rng),
-        1 => {
-            format!("if input == {input_example} {{
-            {expr1}
-        }} else {{
-            {expr2}
-        }}",
-        input_example = (input_type.example)(rng),
-        expr1 = partial_eq_gen(rng, input_type, output_type),
-        expr2 = partial_eq_gen(rng, input_type, output_type),
-    )
-        }
-        _ => {
-            format!("if input != {input_example} {{
-            {expr1}
-        }} else {{
-            {expr2}
-        }}",
-        input_example = (input_type.example)(rng),
-        expr1 = partial_eq_gen(rng, input_type, output_type),
-        expr2 = partial_eq_gen(rng, input_type, output_type),
-    )
-        }
-    }
-
 }
 
 pub struct PuzzleType<'a> {
