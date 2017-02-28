@@ -44,6 +44,7 @@ pub enum Colour {
 }
 "
             .to_string(),
+        is_partial_eq: true,
         is_enum: true,
         built_in: false,
         example: &|mut rng| match rng.gen::<u8>() % 3 {

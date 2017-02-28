@@ -1,33 +1,88 @@
 use rand::{Rng, StdRng};
 
 pub fn gen(rng: &mut StdRng, input_type: &PuzzleType, output_type: &PuzzleType) -> String {
-    match rng.gen::<u8>() % 4 {
-        0 => (output_type.example)(rng),
+    if input_type.is_integer {
+        int_input_gen(rng, input_type, output_type)
+    } else if input_type.is_partial_eq {
+        partial_eq_gen(rng, input_type, output_type)
+    } else {
+        type_expr(rng, output_type)
+    }
+}
+
+fn int_input_gen(rng: &mut StdRng, input_type: &PuzzleType, output_type: &PuzzleType) -> String {
+    //TODO add recursion limit so we canmake interesting results more common
+    // but still have it terminate. It would also allow difficulty scaling.
+    match rng.gen::<u8>() % 14 {
+        0 => type_expr(rng, output_type),
         1 => {
-            format!("if input == {input_example} {{
-            {expr1}
-        }} else {{
-            {expr2}
-        }}",
-        input_example = (input_type.example)(rng),
-        expr1 = enum_gen(rng, input_type, output_type),
-        expr2 = enum_gen(rng, input_type, output_type),
-    )
-        }
-        2 => {
             format!("if input == {input_type_expr} {{
             {expr1}
         }} else {{
             {expr2}
         }}",
-        input_type_expr = int_expr(rng, input_type),
-        expr1 = enum_gen(rng, input_type, output_type),
-        expr2 = enum_gen(rng, input_type, output_type),
+        input_type_expr = type_expr(rng, input_type),
+        expr1 = int_input_gen(rng, input_type, output_type),
+        expr2 = int_input_gen(rng, input_type, output_type),
     )
         }
+        2 => {
+            format!("if input >= {input_type_expr} {{
+            {expr1}
+        }} else {{
+            {expr2}
+        }}",
+        input_type_expr = type_expr(rng, input_type),
+        expr1 = int_input_gen(rng, input_type, output_type),
+        expr2 = int_input_gen(rng, input_type, output_type),
+    )
+        }
+        3 => {
+            format!("if input > {input_type_expr} {{
+            {expr1}
+        }} else {{
+            {expr2}
+        }}",
+        input_type_expr = type_expr(rng, input_type),
+        expr1 = int_input_gen(rng, input_type, output_type),
+        expr2 = int_input_gen(rng, input_type, output_type),
+    )
+        }
+        4 => {
+            format!("if input <= {input_type_expr} {{
+            {expr1}
+        }} else {{
+            {expr2}
+        }}",
+        input_type_expr = type_expr(rng, input_type),
+        expr1 = int_input_gen(rng, input_type, output_type),
+        expr2 = int_input_gen(rng, input_type, output_type),
+    )
+        }
+        5 => {
+            format!("if input < {input_type_expr} {{
+            {expr1}
+        }} else {{
+            {expr2}
+        }}",
+        input_type_expr = type_expr(rng, input_type),
+        expr1 = int_input_gen(rng, input_type, output_type),
+        expr2 = int_input_gen(rng, input_type, output_type),
+    )
+        }
+        6 => {
+            format!("if input != {input_type_expr} {{
+                {expr1}
+            }} else {{
+                {expr2}
+            }}",
+            input_type_expr = type_expr(rng, input_type),
+            expr1 = int_input_gen(rng, input_type, output_type),
+            expr2 = int_input_gen(rng, input_type, output_type),
+            )
+        }
         //TODO expression that involves `input`
-        // 3 =>
-        _ => int_expr(rng, input_type),
+        _ => type_expr(rng, output_type),
 
     }
 }
@@ -74,26 +129,48 @@ fn int_expr(rng: &mut StdRng, t: &PuzzleType) -> String {
 
 }
 
-fn enum_gen(rng: &mut StdRng, input_type: &PuzzleType, output_type: &PuzzleType) -> String {
-    if rng.gen::<bool>() {
-        (output_type.example)(rng)
+fn type_expr(rng: &mut StdRng, t: &PuzzleType) -> String {
+    if t.is_integer {
+        int_expr(rng, t)
     } else {
-        format!("if input == {input_example} {{
+        (t.example)(rng)
+    }
+}
+
+fn partial_eq_gen(rng: &mut StdRng, input_type: &PuzzleType, output_type: &PuzzleType) -> String {
+    match rng.gen::<u8>() % 3 {
+        0 => (output_type.example)(rng),
+        1 => {
+            format!("if input == {input_example} {{
             {expr1}
         }} else {{
             {expr2}
         }}",
         input_example = (input_type.example)(rng),
-        expr1 = enum_gen(rng, input_type, output_type),
-        expr2 = enum_gen(rng, input_type, output_type),
-     )
+        expr1 = partial_eq_gen(rng, input_type, output_type),
+        expr2 = partial_eq_gen(rng, input_type, output_type),
+    )
+        }
+        _ => {
+            format!("if input != {input_example} {{
+            {expr1}
+        }} else {{
+            {expr2}
+        }}",
+        input_example = (input_type.example)(rng),
+        expr1 = partial_eq_gen(rng, input_type, output_type),
+        expr2 = partial_eq_gen(rng, input_type, output_type),
+    )
+        }
     }
+
 }
 
 pub struct PuzzleType<'a> {
     pub definition: String,
     pub name: String,
     pub arbitrary_impl: String,
+    pub is_partial_eq: bool,
     pub is_enum: bool,
     pub built_in: bool,
     pub example: &'a Fn(&mut StdRng) -> String,
@@ -106,6 +183,7 @@ impl<'a> PuzzleType<'a> {
             definition: "".to_string(),
             name: name.to_string(),
             arbitrary_impl: "".to_string(),
+            is_partial_eq: PuzzleType::is_partial_eq(name),
             is_enum: false,
             built_in: true,
             example: example,
@@ -113,6 +191,17 @@ impl<'a> PuzzleType<'a> {
         }
     }
 
+    fn is_partial_eq(name: &str) -> bool {
+        if PuzzleType::is_integer(name) {
+            return true;
+        }
+
+        match name {
+            "str" | "&str" | "String" | "char" | "f32" | "f64" => true,
+            _ => false,
+        }
+
+    }
     fn is_integer(name: &str) -> bool {
         match name {
             "i8" | "u8" | "i16" | "u16" | "i32" | "u32" | "i64" | "u64" | "isize" | "usize" => true,
@@ -153,7 +242,7 @@ pub enum Axis {
 }
 "
         .to_string(),
-    is_enum: true,
+    is_partial_eq: true,
     built_in: false,
     example: |mut rng| {
         match rng.gen::<u8>() % 3 {
