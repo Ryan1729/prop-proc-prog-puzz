@@ -10,12 +10,31 @@ use std::env;
 use std::path::Path;
 use std::io::Write;
 use std::fs::OpenOptions;
+use std::time::{SystemTime, UNIX_EPOCH};
 
 mod code_gen;
 
 use code_gen::PuzzleType;
 
 fn main() {
+    let seed: usize = match SystemTime::now().duration_since(UNIX_EPOCH) {
+        Ok(duration) => duration.as_secs() as usize,
+        Err(_) => 42,
+    };
+    println!("seed: {}", seed);
+
+    let rng;
+    unsafe {
+        if RNG.is_none() {
+            let seed: &[_] = &[seed];
+            RNG = Some(SeedableRng::from_seed(seed));
+        }
+
+        rng = RNG.as_mut().unwrap();
+    }
+
+    let puzzle_name: String = "puzzle_".to_string() + seed.to_string().as_ref();
+
     let input_example: &Fn(&mut StdRng) -> String = &|rng: &mut StdRng| rng.gen::<u8>().to_string();
 
     let input_type = &PuzzleType::built_in("u8", input_example);
@@ -54,21 +73,6 @@ pub enum Colour {
         },
         is_integer: false,
     };
-
-    let seed: usize = 42;
-    println!("seed: {}", seed);
-
-    let rng;
-    unsafe {
-        if RNG.is_none() {
-            let seed: &[_] = &[seed];
-            RNG = Some(SeedableRng::from_seed(seed));
-        }
-
-        rng = RNG.as_mut().unwrap();
-    }
-
-    let puzzle_name: String = "puzzle_".to_string() + seed.to_string().as_ref();
 
     let code = code_gen::gen(rng, input_type, output_type);
 
