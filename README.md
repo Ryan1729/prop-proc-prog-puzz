@@ -73,7 +73,7 @@ error: test failed
 
 Open `src/lib.rs` in your editor of choice.
 
-That file should contain (among other things) a function template something like the following:
+That file should contain (among other things,) a function template something like the following:
 
 ```rust
 #[allow(unused_variables)]
@@ -82,7 +82,7 @@ pub fn fill_me_in (input : u8) -> Colour {
 }
 ```
 
-Replace `unimplemented!();` with a valid body for the function. In out example `Blue` would work.
+Replace `unimplemented!();` with a valid body for the function. In our example `Blue` would work.
 
 ```rust
 #[allow(unused_variables)]
@@ -114,7 +114,7 @@ Make a change to the function that satisfies these errors and all previous ones.
 
 Eventually you should be able to write an expression that passes the test, like this one in our example :
 
-```
+```rust
 if input > 0 { Blue } else { Green }
 ```
 
